@@ -3,3 +3,5 @@ syntax: glob
 .obj
 .doxygen
 graph
+doko
+Makefile.depend

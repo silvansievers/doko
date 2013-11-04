@@ -31,16 +31,16 @@ OBJECTS_GRID = $(SOURCES_GRID:%.cpp=.obj/%$(SUFFIX_GRID).o)
 
 CC = g++
 DEPEND = g++ -MM
-CCOPT = -g -m32 -Wall -O0
-LINKOPT = -g -m32 -lboost_program_options
-POST_LINKOPT =
+CCOPT = -g -m32 -Wall -O0 -I./
+LINKOPT = -g -m32
+POST_LINKOPT = -Llib -lboost_program_options
 LINKOPT_GRID  = -g -m32 -static --static-libgcc
 POST_LINKOPT_GRID = -lboost_program_options
 
 release: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(LINKOPT) $(OBJECTS) $(POST_LINKOPT) -o $(TARGET)
+	$(CC) $(LINKOPT) $(OBJECTS) -o $(TARGET) $(POST_LINKOPT)
 
 $(OBJECTS): .obj/%.o: %.cpp
 	mkdir -p $$(dirname $@)
@@ -49,7 +49,7 @@ $(OBJECTS): .obj/%.o: %.cpp
 grid: $(TARGET_GRID)
 
 $(TARGET_GRID) : $(OBJECTS_GRID)
-	$(CC) $(LINKOPT_GRID) $(OBJECTS_GRID) $(POST_LINKOPT_GRID) -o $(TARGET_GRID)
+	$(CC) $(LINKOPT_GRID) $(OBJECTS_GRID) -o $(TARGET_GRID) $(POST_LINKOPT_GRID)
 
 $(OBJECTS_GRID): .obj/%$(SUFFIX_GRID).o: %.cpp
 	mkdir -p $$(dirname $@)
