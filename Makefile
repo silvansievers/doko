@@ -19,11 +19,6 @@ SOURCES = main.cpp $(HEADERS:%.h=%.cpp)
 OBJECTS = $(SOURCES:%.cpp=.obj/%.o)
 #PROFILE_OBJECTS = $(SOURCES:%.cpp=.obj/%.profile.o)
 
-SUFFIX_GRID = .grid
-TARGET_GRID = $(TARGET)$(SUFFIX_GRID)
-SOURCES_GRID = $(SOURCES)
-OBJECTS_GRID = $(SOURCES_GRID:%.cpp=.obj/%$(SUFFIX_GRID).o)
-
 #SUFFIX_TEST = .test
 #TARGET_TEST = $(TARGET)$(SUFFIX_TEST)
 #SOURCES_TEST = test.cpp $(HEADERS:%.h=%.cpp)
@@ -34,8 +29,6 @@ DEPEND = g++ -MM
 CCOPT = -g -m32 -Wall -O0 -I./
 LINKOPT = -g -m32
 POST_LINKOPT = -Llib -lboost_program_options
-LINKOPT_GRID  = -g -m32 -static --static-libgcc
-POST_LINKOPT_GRID = -lboost_program_options
 
 release: $(TARGET)
 
@@ -43,15 +36,6 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(LINKOPT) $(OBJECTS) -o $(TARGET) $(POST_LINKOPT)
 
 $(OBJECTS): .obj/%.o: %.cpp
-	mkdir -p $$(dirname $@)
-	$(CC) $(CCOPT) -c $< -o $@
-
-grid: $(TARGET_GRID)
-
-$(TARGET_GRID) : $(OBJECTS_GRID)
-	$(CC) $(LINKOPT_GRID) $(OBJECTS_GRID) -o $(TARGET_GRID) $(POST_LINKOPT_GRID)
-
-$(OBJECTS_GRID): .obj/%$(SUFFIX_GRID).o: %.cpp
 	mkdir -p $$(dirname $@)
 	$(CC) $(CCOPT) -c $< -o $@
 
@@ -66,11 +50,11 @@ $(OBJECTS_GRID): .obj/%$(SUFFIX_GRID).o: %.cpp
 
 clean:
 	rm -rf .obj
-	rm -f *~ *.pyc
+	rm -f *~
 	rm -f Makefile.depend gmon.out PROFILE core
 
 distclean: clean
-	rm -f $(TARGET) $(TARGET_GRID)
+	rm -f $(TARGET)
 
 Makefile.depend: $(SOURCES) $(HEADERS)
 	rm -f Makefile.temp
@@ -91,4 +75,4 @@ ifneq ($(MAKECMDGOALS),distclean)
 endif
 endif
 
-.PHONY: release grid clean distclean
+.PHONY: release clean distclean
