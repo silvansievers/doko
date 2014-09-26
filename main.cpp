@@ -2,16 +2,14 @@
 #include "options.h"
 #include "session.h"
 
-#include <boost/program_options.hpp>
-#include <cassert>
 #include <csignal>
+#include <cstdlib>
 #include <fstream>
-#include <iostream>
-#include <string>
-#include <vector>
+#include <limits>
+#include <sstream>
+#include <unistd.h>
 
 using namespace std;
-using namespace boost::program_options;
 
 int get_peak_memory_in_kb() {
     // On error, produces a warning on cerr and returns -1.
@@ -70,190 +68,228 @@ void register_event_handlers() {
     signal(SIGINT, signal_handler);
 }
 
-int check_uct_player_options(vector<int> &player_options) {
-    if (player_options.empty()) { // use default options
-         player_options.push_back(1);
-         player_options.push_back(500);
-         player_options.push_back(1);
-         player_options.push_back(1);
-         player_options.push_back(20000);
-         player_options.push_back(1000);
-         player_options.push_back(10);
-         player_options.push_back(2);
-         player_options.push_back(0);
-         player_options.push_back(0);
-         player_options.push_back(0);
-         return 0;
-    } else {
-        if (player_options.size() != 11) {
-            cerr << "must specify 11 player options" << endl;
-            return 2;
-        }
-        if (player_options[0] != 0 && player_options[0] != 1) {
-            cerr << "version must be set to 0 or 1" << endl;
-            return 2;
-        }
-        if (player_options[1] < 1) {
-            cerr << "score points factor must be greater 0" << endl;
-            return 2;
-        }
-        if (player_options[2] != 0 && player_options[2] != 1) {
-            cerr << "using player's or team's points must be set to 0 or 1" << endl;
-            return 2;
-        }
-        if (player_options[3] < 1) {
-            cerr << "playing points divisor must be greater 0" << endl;
-            return 2;
-        }
-        if (player_options[4] < 1) {
-            cerr << "exploration constant must be greater 0" << endl;
-            return 2;
-        }
-        if (player_options[5] < 1) {
-            cerr << "number of rollouts must be greater 0" << endl;
-            return 2;
-        }
-        if (player_options[6] < 1) {
-            cerr << "number of simulations must be greater 0" << endl;
-            return 2;
-        }
-        if (player_options[7] != 0 && player_options[7] != 1 && player_options[7] != 2) {
-            cerr << "announcement option must be set to 0, 1 or 2" << endl;
-            return 2;
-        }
-        if (player_options[8] != 0 && player_options[8] != 1) {
-            cerr << "using wrong UCT formula must be set to 0 or 1" << endl;
-            return 2;
-        }
-        if (player_options[9] != 0 && player_options[9] != 1) {
-            cerr << "using MC simulation must be set to 0 or 1" << endl;
-            return 2;
-        }
-        if (player_options[10] < 0 || player_options[10] > 4) {
-            cerr << "action selection must be in the interval [0,4]" << endl;
-            return 2;
-        }
-        return 0;
+void print_help() {
+    cout << "Usage:";
+    cout << "--help,-h: print this help message" << endl;
+    cout << "--number,-n: number of games for the session, preferably a number divisible by 4 (if smaller than 4, compulsory solos are disabled)";
+    cout << "--compulsory-solo: play with compulsory solo (default: false)" << endl;
+    cout << "--random,--r: use random cards for the whole session (default: false). if option is not set, you will be asked to input a card distribution manually (or to deal random cards) after each game";
+    cout << "--seed,--s: random seed for random cards dealing" << endl;
+    cout << "--announcing-version: 0 for the version in which a player asked for an announcement can choose between all the legal announcements and 1 for the version in which a player asked for an announcement only can opt to not announce or to announce the 'next' announcement for his team and then gets asked again immediately if he wants to make another announcement or not" << endl;
+    cout << "--players,--p: specify four player types from { uct, human, random } (default: uct random random random)" << endl;
+    cout << "--print-player-options: prints options that can be specified by using the --p*-options arguments of the program, then terminating" << endl;
+    cout << "--p0-options: specify options for player 0 (only if UCT player; see --print-player-options for available options)" << endl;
+    cout << "--p1-options: specify options for player 1 (only if UCT player; see --print-player-options for available options)" << endl;
+    cout << "--p2-options: specify options for player 2 (only if UCT player; see --print-player-options for available options)" << endl;
+    cout << "--p3-options: specify options for player 3 (only if UCT player; see --print-player-options for available options)" << endl;
+    cout << "--create-graph: create a .dot-file for each constructed UCT tree (default: false)" << endl;
+    cout << "--verbose,--v: display detailed output during play (default: false). recommended to enable if playing with human players" << endl;
+    cout << "--uct-verbose: display detailed output from UCT players and UCT algorithm (default: false). only relevant if there is at least one UCT player" << endl;
+    cout << "--debug,--d: display debug output in BeliefGameState (default: false)" << endl;
+    cout << "--uct-debug: display debug output in Uct (default: false)" << endl;
+}
+
+void print_player_options() {
+    string player_options = "(currently only a UCT player accepts options)\n\nversion:\n0 for an UCT algorithm with a number of simulations, each with a fixed card assignment and a number of rollouts per simulation, 1 for an UCT algorithm with a number of rollouts, each using a different card assignment\n\nscore points factor:\ninteger which score points get multiplyed by in order to obtain UCT rewards\n\nplayer's or team's points:\n0 for using player's point as an additional bias to the score points, 1 for using the player's team points\n\nplaying points divisor:\ninterger which the player's or the team points of the player get divided by before being added to the (modified) score points\n\nexploration:\ninteger used as exploration constant in the UCT formula\n\nrollouts:\ninteger setting the number of rollouts performed in a UCT search (either in total, or per simulation)\n\nsimulations:\ninteger setting the number of simulations performed in a UCT search, specify anything if using version 1 (do not leave empty though!)\n\nannouncements:\n0 to forbid the UCT player to do announcements, 1 to allow, 2 to allow but to forbid if all possible moves yield a negative reward\n\nWrong UCT formula:\n0 to use the correct UCT formula and 1 to use the total number of visits in the tree (i.e. the current number of rollout) rather than the number of total visits of the specific node for which the formula is calculated\n\nMC simulation:\n0 if no MC simulation should be carried on but all states encountered during a rollout should be added to the tree, i.e. more than one per rollout. 1 if a MC simulation should be carried on as soon as a leaf node was added to the tree, i.e. only one node is added to the tree per rollout\n\nAction selection:\n0 to choose the first successor when expanding the first node and use random action selection after a new node was inserted, 1 to also use random action selection when expanding the first node (rest same as 0), 2 to choose the first successor when expanding the first node and use heurstic guided action selection after a new node was inserted, 3 to use random action selection when expanding the first node and heristic guided action selection after a new node was inserted, 4 to use heuristic guided action whenever a successor needs to be chosen\n\n(defaults: 1 500 1 1 20000 1000 10 2 0 0 0)";
+    cout << player_options << endl;
+}
+
+int get_int_option(int argc, char *argv[], int index) {
+    if (index + 1 >= argc) {
+        cerr << "Missing (integer) argument after " << argv[index] << endl;
+        exit(2);
+    }
+//    if (argv[index + 1][0] == '-') {
+//        cerr << argv[index] << " requires an integer argument" << endl;
+//        exit(2);
+//    }
+    int result = atoi(argv[index + 1]);
+    return result;
+}
+
+void parse_players_options(int argc, char *argv[], int index, vector<int> &players_options) {
+    if (index + 11 >= argc) {
+        cerr << "Missing eleven (integer) arguments after " << argv[index] << endl;
+        exit(2);
+    }
+    players_options.reserve(11);
+    for (int j = 0; j < 11; ++j) {
+        int option = atoi(argv[index + j]);
+        players_options.push_back(option);
+    }
+}
+
+void check_uct_player_options(const vector<int> &player_options) {
+    if (player_options.size() != 11) {
+        cerr << "must specify 11 player options" << endl;
+        exit(2);
+    }
+    if (player_options[0] != 0 && player_options[0] != 1) {
+        cerr << "version must be set to 0 or 1" << endl;
+        exit(2);
+    }
+    if (player_options[1] < 1) {
+        cerr << "score points factor must be greater 0" << endl;
+        exit(2);
+    }
+    if (player_options[2] != 0 && player_options[2] != 1) {
+        cerr << "using player's or team's points must be set to 0 or 1" << endl;
+        exit(2);
+    }
+    if (player_options[3] < 1) {
+        cerr << "playing points divisor must be greater 0" << endl;
+        exit(2);
+    }
+    if (player_options[4] < 1) {
+        cerr << "exploration constant must be greater 0" << endl;
+        exit(2);
+    }
+    if (player_options[5] < 1) {
+        cerr << "number of rollouts must be greater 0" << endl;
+        exit(2);
+    }
+    if (player_options[6] < 1) {
+        cerr << "number of simulations must be greater 0" << endl;
+        exit(2);
+    }
+    if (player_options[7] != 0 && player_options[7] != 1 && player_options[7] != 2) {
+        cerr << "announcement option must be set to 0, 1 or 2" << endl;
+        exit(2);
+    }
+    if (player_options[8] != 0 && player_options[8] != 1) {
+        cerr << "using wrong UCT formula must be set to 0 or 1" << endl;
+        exit(2);
+    }
+    if (player_options[9] != 0 && player_options[9] != 1) {
+        cerr << "using MC simulation must be set to 0 or 1" << endl;
+        exit(2);
+    }
+    if (player_options[10] < 0 || player_options[10] > 4) {
+        cerr << "action selection must be in the interval [0,4]" << endl;
+        exit(2);
     }
 }
 
 int main(int argc, char *argv[]) {
     register_event_handlers();
-    int number;
+
+    int number = 1000;
     bool compulsory_solo = false;
     bool random = false;
-    int seed;
-    int announcing_version;
-    vector<string> players;
-    player_t player_default[4] = { UCT, RANDOM, RANDOM, RANDOM };
+    int seed = 2012;
+    int announcing_version = 1;
+    vector<player_t> players_types;
     vector<vector<int> > players_options(4);
-    string player_options = "(currently only a UCT player accepts options)\n\nversion:\n0 for an UCT algorithm with a number of simulations, each with a fixed card assignment and a number of rollouts per simulation, 1 for an UCT algorithm with a number of rollouts, each using a different card assignment\n\nscore points factor:\ninteger which score points get multiplyed by in order to obtain UCT rewards\n\nplayer's or team's points:\n0 for using player's point as an additional bias to the score points, 1 for using the player's team points\n\nplaying points divisor:\ninterger which the player's or the team points of the player get divided by before being added to the (modified) score points\n\nexploration:\ninteger used as exploration constant in the UCT formula\n\nrollouts:\ninteger setting the number of rollouts performed in a UCT search (either in total, or per simulation)\n\nsimulations:\ninteger setting the number of simulations performed in a UCT search, specify anything if using version 1 (do not leave empty though!)\n\nannouncements:\n0 to forbid the UCT player to do announcements, 1 to allow, 2 to allow but to forbid if all possible moves yield a negative reward\n\nWrong UCT formula:\n0 to use the correct UCT formula and 1 to use the total number of visits in the tree (i.e. the current number of rollout) rather than the number of total visits of the specific node for which the formula is calculated\n\nMC simulation:\n0 if no MC simulation should be carried on but all states encountered during a rollout should be added to the tree, i.e. more than one per rollout. 1 if a MC simulation should be carried on as soon as a leaf node was added to the tree, i.e. only one node is added to the tree per rollout\n\nAction selection:\n0 to choose the first successor when expanding the first node and use random action selection after a new node was inserted, 1 to also use random action selection when expanding the first node (rest same as 0), 2 to choose the first successor when expanding the first node and use heurstic guided action selection after a new node was inserted, 3 to use random action selection when expanding the first node and heristic guided action selection after a new node was inserted, 4 to use heuristic guided action whenever a successor needs to be chosen\n\n(defaults: 1 500 1 1 20000 1000 10 2 0 0 0)";
     bool create_graph = false;
     bool verbose = false;
     bool uct_verbose = false;
     bool debug = false;
     bool uct_debug = false;
 
-    options_description desc("Allowed options");
-    desc.add_options()
-    ("help,h", "print this help message")
-    ("number,n", value<int>(&number)->default_value(1000), "number of games for the session, preferably a number divisible by 4 (if smaller than 4, compulsory solos are disabled)")
-    ("compulsory-solo", "play with compulsory solo (default: false)")
-    ("random,r", "use random cards for the whole session (default: false). if option is not set, you will be asked to input a card distribution manually (or to deal random cards) after each game")
-    ("seed,s", value<int>(&seed)->default_value(2012), "random seed for random cards dealing")
-    ("announcing-version", value<int>(&announcing_version)->default_value(1), "0 for the version in which a player asked for an announcement can choose between all the legal announcements and 1 for the version in which a player asked for an announcement only can opt to not announce or to announce the 'next' announcement for his team and then gets asked again immediately if he wants to make another announcement or not")
-    ("players,p", value<vector<string> >(&players)->multitoken(), "specify four player types from { uct, human, random } (default: uct random random random)")
-    ("print-player-options", "prints options that can be specified by using the --p*-options arguments of the program, then terminating")
-    ("p0-options", value<vector<int> >(&players_options[0])->multitoken(), "specify options for player 0 (see --print-player-options for available options)")
-    ("p1-options", value<vector<int> >(&players_options[1])->multitoken(), "specify options for player 1 (see --print-player-options for available options)")
-    ("p2-options", value<vector<int> >(&players_options[2])->multitoken(), "specify options for player 2 (see --print-player-options for available options)")
-    ("p3-options", value<vector<int> >(&players_options[3])->multitoken(), "specify options for player 3 (see --print-player-options for available options)")
-    ("create-graph", "create a .dot-file for each constructed UCT tree (default: false)")
-    ("verbose,v", "display detailed output during play (default: false). recommended to enable if playing with human players")
-    ("uct-verbose", "display detailed output from UCT players and UCT algorithm (default: false). only relevant if there is at least one UCT player")
-    ("debug,d", "display debug output in BeliefGameState (default: false)")
-    ("uct-debug", "display debug output in Uct (default: false)")
-    ;
+    // TODO: test if important command line arguments trigger errors as intended
+    // TODO: move parsing to Options? Or have its own class
+    // TODO: even catch more invalid command line options
 
-    variables_map vm;
-    store(parse_command_line(argc, argv, desc), vm);
-    notify(vm);
-
-    vector<player_t> players_types;
-    players_types.reserve(4);
-    if (vm.count("help")) {
-        cout << desc << endl;
-        return 0;
-    }
-    if (vm.count("number")) {
-        if (number < 1) {
-            cerr << "number of games must be at least 1" << endl;
-            return 2;
+    for (int i = 1; i < argc; ++i) {
+        string arg = argv[i];
+        if (arg == "--help" || arg == "-h") {
+            print_help();
+            exit(0);
+        } else if (arg == "--print-player-options") {
+            print_player_options();
+            exit(0);
         }
-    }
-    if (vm.count("compulsory-solo")) {
-        if (number >= 4)
+        else if (arg == "--number" || arg == "-n") {
+            number = get_int_option(argc, argv, i);
+        } else if (arg == "--compulsory-solo") {
             compulsory_solo = true;
+        } else if (arg == "--random" || arg == "r") {
+            random = true;
+        } else if (arg == "--seed" || arg == "s") {
+            seed = get_int_option(argc, argv, i);
+        } else if (arg == "--announcing-version") {
+            announcing_version = get_int_option(argc, argv, i);
+        } else if (arg == "--players" || arg == "p") {
+            if (i + 4 >= argc) {
+                cerr << "Missing four arguments after " << argv[i] << endl;
+                exit(2);
+            }
+            players_types.reserve(4);
+            for (int j = 0; j < 4; ++j) {
+                string player_type(argv[i + 1 + j]);
+                if (player_type == "human") {
+                    players_types.push_back(HUMAN);
+                } else if (player_type == "random") {
+                    players_types.push_back(RANDOM);
+                } else if (player_type == "uct") {
+                    players_types.push_back(UCT);
+                } else {
+                    cerr << "Players types can be human, random or uct" << endl;
+                    exit(2);
+                }
+            }
+        } else if (arg == "--p0-options") {
+            parse_players_options(argc, argv, i, players_options[0]);
+        } else if (arg == "--p1-options") {
+            parse_players_options(argc, argv, i, players_options[1]);
+        } else if (arg == "--p2-options") {
+            parse_players_options(argc, argv, i, players_options[2]);
+        } else if (arg == "--p3-options") {
+            parse_players_options(argc, argv, i, players_options[3]);
+        } else if (arg == "--create-graph") {
+            create_graph = true;
+        } else if (arg == "--verbose" || arg == "v") {
+            verbose = true;
+        } else if (arg == "--uct-verbose") {
+            uct_verbose = true;
+        } else if (arg == "--debug" || arg == "d") {
+            debug = true;
+        } else if (arg == "--uct-debug") {
+            uct_debug = true;
+        } else {
+            cerr << "Unrecognized option " << arg << " or too many arguments" << endl;
+            exit(2);
+        }
     }
 
-    if (vm.count("random")) {
-        random = true;
+    // TODO: use better player options (ideally named)
+
+    if (players_types.empty()) {
+        // use default values
+        players_types.push_back(UCT);
+        players_types.push_back(RANDOM);
+        players_types.push_back(RANDOM);
+        players_types.push_back(RANDOM);
     }
-    if (vm.count("seed")) {
-        if (seed < 0 || seed > numeric_limits<int>::max()) {
-            cerr << "seed should be in the range [0..2^31-1]" << endl;
-            return 2;
+    for (size_t i = 0; i < players_options.size(); ++i) {
+        if (players_types[i] != UCT && !players_options[i].empty()) {
+            cerr << "Specifying player options for player " << i
+                 << " is only meaningful if that is an UCT player" << endl;
+            exit(2);
         }
-    }
-    if (vm.count("players")) { // players were manually specified
-        if (players.size() != 4) {
-            cerr << "you must specify exactly 4 player types" << endl;
-            return 2;
-        }
-        for (size_t i = 0; i < players.size(); ++i) {
-            if (players[i] == "uct")
-                players_types.push_back(UCT);
-            else if (players[i] == "human")
-                players_types.push_back(HUMAN);
-            else if (players[i] == "random")
-                players_types.push_back(RANDOM);
-            else {
-                cerr << "unknown input for player type" << endl;
-                return 2;
+        if (players_types[i] == UCT) {
+            if (players_options[i].empty()) {
+                // use default values
+                players_options[i].push_back(1);
+                players_options[i].push_back(500);
+                players_options[i].push_back(1);
+                players_options[i].push_back(1);
+                players_options[i].push_back(20000);
+                players_options[i].push_back(1000);
+                players_options[i].push_back(10);
+                players_options[i].push_back(2);
+                players_options[i].push_back(0);
+                players_options[i].push_back(0);
+                players_options[i].push_back(0);
+            } else {
+                check_uct_player_options(players_options[i]);
             }
         }
-    } else { // use default player types
-        players_types = vector<player_t>(player_default, player_default + sizeof(player_default) / sizeof(player_t));
-    }
-    // in both cases, need to iterate over player types to check if there is a UCT player and if so, to check its configuration or to set the default configuration
-    for (size_t i = 0; i < players_types.size(); ++i) {
-        if (players_types[i] == UCT) {
-            if (check_uct_player_options(players_options[i]) == 2)
-                return 2;
-        }
-    }
-    if (vm.count("print-player-options")) {
-        cout << player_options << endl;
-        return 0;
-    }
-    if (vm.count("create-graph")) {
-        create_graph = true;
-    }
-    if (vm.count("verbose")) {
-        verbose = true;
-    }
-    if (vm.count("uct-verbose")) {
-        uct_verbose = true;
-    }
-    if (vm.count("debug")) {
-        debug = true;
-    }
-    if (vm.count("uct-debug")) {
-        uct_debug = true;
     }
 
-    Options options(number, compulsory_solo, players_types, random, seed, verbose, uct_verbose, debug, uct_debug,
-                    players_options, create_graph, announcing_version);
+    Options options(number, compulsory_solo, players_types, random, seed,
+                    verbose, uct_verbose, debug, uct_debug, players_options,
+                    create_graph, announcing_version);
     Session session(options);
     return 0;
 }
