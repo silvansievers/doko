@@ -26,9 +26,10 @@ OBJECTS = $(SOURCES:%.cpp=.obj/%.o)
 
 CC = g++
 DEPEND = g++ -MM
-CCOPT = -g -m32 -Wall -O0 -I./
+CCOPT = -g -m32 -Wall -O0 -Werror
+#-I./
 LINKOPT = -g -m32
-POST_LINKOPT = -Llib -lboost_program_options
+#POST_LINKOPT = -Llib -lboost_program_options
 
 release: $(TARGET)
 
