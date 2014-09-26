@@ -607,7 +607,7 @@ void Uct::rollout(BeliefGameState *current_state, int number_of_rollout) {
                     chosen_move = current_state->get_best_move_index(legal_moves);
                     if (chosen_move == -1) // no safe card was found
                         chosen_move = rng.next(legal_moves.size());
-                    assert(chosen_move >= 0 && chosen_move < legal_moves.size());
+                    assert(chosen_move >= 0 && chosen_move < int(legal_moves.size()));
                 } else
                     chosen_move = rng.next(legal_moves.size());
             }
