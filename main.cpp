@@ -1,11 +1,12 @@
-#include "cards.h"
 #include "options.h"
 #include "session.h"
 
 #include <csignal>
 #include <cstdlib>
+#include <ctime>
 #include <fstream>
 #include <limits>
+#include <iomanip>
 #include <sstream>
 #include <unistd.h>
 
@@ -39,7 +40,7 @@ int get_peak_memory_in_kb() {
 }
 
 void print_peak_memory() {
-    cout << "\npeak memory: " << get_peak_memory_in_kb() << " KB" << endl;
+    cout << "peak memory: " << get_peak_memory_in_kb() << " KB" << endl;
 }
 
 void signal_handler(int signal_number) {
@@ -99,10 +100,6 @@ int get_int_option(int argc, char *argv[], int &index) {
         cerr << "Missing (integer) argument after " << argv[index] << endl;
         exit(2);
     }
-//    if (argv[index + 1][0] == '-') {
-//        cerr << argv[index] << " requires an integer argument" << endl;
-//        exit(2);
-//    }
     int result = atoi(argv[index + 1]);
     ++index;
     return result;
@@ -294,9 +291,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    clock_t start = clock();
     Options options(number, compulsory_solo, players_types, random, seed,
                     verbose, uct_verbose, debug, uct_debug, players_options,
                     create_graph, announcing_version);
     Session session(options);
+    double duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+    cout << setprecision(5) << "time: " << duration << "s" << endl;
     return 0;
 }
