@@ -71,7 +71,7 @@ void register_event_handlers() {
 void print_help() {
     cout << "Usage:";
     cout << "--help,-h: print this help message" << endl;
-    cout << "--number,-n: number of games for the session, preferably a number divisible by 4 (if smaller than 4, compulsory solos are disabled)";
+    cout << "--number,-n: number of games for the session, preferably a number divisible by 4 (if smaller than 4, compulsory solos are disabled)" << endl;
     cout << "--compulsory-solo: play with compulsory solo (default: false)" << endl;
     cout << "--random,--r: use random cards for the whole session (default: false). if option is not set, you will be asked to input a card distribution manually (or to deal random cards) after each game";
     cout << "--seed,--s: random seed for random cards dealing" << endl;
@@ -94,7 +94,7 @@ void print_player_options() {
     cout << player_options << endl;
 }
 
-int get_int_option(int argc, char *argv[], int index) {
+int get_int_option(int argc, char *argv[], int &index) {
     if (index + 1 >= argc) {
         cerr << "Missing (integer) argument after " << argv[index] << endl;
         exit(2);
@@ -104,19 +104,21 @@ int get_int_option(int argc, char *argv[], int index) {
 //        exit(2);
 //    }
     int result = atoi(argv[index + 1]);
+    ++index;
     return result;
 }
 
-void parse_players_options(int argc, char *argv[], int index, vector<int> &players_options) {
+void parse_players_options(int argc, char *argv[], int &index, vector<int> &players_options) {
     if (index + 11 >= argc) {
         cerr << "Missing eleven (integer) arguments after " << argv[index] << endl;
         exit(2);
     }
     players_options.reserve(11);
     for (int j = 0; j < 11; ++j) {
-        int option = atoi(argv[index + j]);
+        int option = atoi(argv[index + 1 + j]);
         players_options.push_back(option);
     }
+    index += 11;
 }
 
 void check_uct_player_options(const vector<int> &player_options) {
@@ -228,6 +230,7 @@ int main(int argc, char *argv[]) {
                     exit(2);
                 }
             }
+            i += 4;
         } else if (arg == "--p0-options") {
             parse_players_options(argc, argv, i, players_options[0]);
         } else if (arg == "--p1-options") {
@@ -247,7 +250,7 @@ int main(int argc, char *argv[]) {
         } else if (arg == "--uct-debug") {
             uct_debug = true;
         } else {
-            cerr << "Unrecognized option " << arg << " or too many arguments" << endl;
+            cerr << "Unrecognized option " << arg << endl;
             exit(2);
         }
     }
@@ -264,7 +267,7 @@ int main(int argc, char *argv[]) {
     for (size_t i = 0; i < players_options.size(); ++i) {
         if (players_types[i] != UCT && !players_options[i].empty()) {
             cerr << "Specifying player options for player " << i
-                 << " is only meaningful if that is an UCT player" << endl;
+                 << " only possible if it is a UCT player" << endl;
             exit(2);
         }
         if (players_types[i] == UCT) {

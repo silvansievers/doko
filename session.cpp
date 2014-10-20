@@ -76,6 +76,7 @@ void Session::play() {
             first_player = next_player(first_player);
     }
     cout << "doppelkopf session finished" << endl;
+    statistics(true);
 }
 
 void Session::shuffle_cards() {
@@ -126,11 +127,11 @@ void Session::check_vorfuehrung(int number_of_remaining_games) {
     }
 }
 
-void Session::statistics() const {
-    cout << "standings:" << endl;
+void Session::statistics(bool final) const {
+    cout << (final ? "final " : "") << "standings:" << endl;
     int sum = 0;
     for (int i = 0; i < 4; ++i) {
-        cout << "player " << i << ": " << players_points[i] << endl;
+        cout << "player " << i << (final ? " final points" : "") << ": " << players_points[i] << endl;
         sum += players_points[i];
     }
     cout << endl;
