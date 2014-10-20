@@ -203,6 +203,10 @@ int main(int argc, char *argv[]) {
         }
         else if (arg == "--number" || arg == "-n") {
             number = get_int_option(argc, argv, i);
+            if (number % 4 != 0) {
+                cerr << "number of games must be a multiple of 4" << endl;
+                exit(2);
+            }
         } else if (arg == "--compulsory-solo") {
             compulsory_solo = true;
         } else if (arg == "--random" || arg == "r") {

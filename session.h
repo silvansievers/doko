@@ -25,7 +25,7 @@ private:
     void shuffle_cards();
     void set_cards() const; // distribute cards to players
     void check_vorfuehrung(int number_of_remaining_games); // test if the remaining games need all to be compulsory solos (i.e. vorfuehrung)
-    void statistics(bool final = false) const; // print accumulated points
+    void statistics() const; // print accumulated points
 public:
     explicit Session(Options &options);
     ~Session();
