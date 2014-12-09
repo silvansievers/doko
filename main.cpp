@@ -1,12 +1,11 @@
 #include "options.h"
 #include "session.h"
+#include "timer.h"
 
 #include <csignal>
 #include <cstdlib>
-#include <ctime>
 #include <fstream>
 #include <limits>
-#include <iomanip>
 #include <sstream>
 #include <unistd.h>
 
@@ -291,12 +290,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    clock_t start = clock();
+    Timer timer;
     Options options(number, compulsory_solo, players_types, random, seed,
                     verbose, uct_verbose, debug, uct_debug, players_options,
                     create_graph, announcing_version);
     Session session(options);
-    double duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    cout << setprecision(5) << "time: " << duration << "s" << endl;
+    cout << "time: " << timer << "s" << endl;
     return 0;
 }
