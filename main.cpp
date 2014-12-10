@@ -1,6 +1,5 @@
 #include "options.h"
 #include "session.h"
-#include "timer.h"
 
 #include <csignal>
 #include <cstdlib>
@@ -290,11 +289,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    Timer timer;
     Options options(number, compulsory_solo, players_types, random, seed,
                     verbose, uct_verbose, debug, uct_debug, players_options,
                     create_graph, announcing_version);
     Session session(options);
-    cout << "time: " << timer << "s" << endl;
     return 0;
 }
