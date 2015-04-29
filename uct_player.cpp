@@ -44,6 +44,9 @@ void UctPlayer::set_cards(Cards cards_) {
 }
 
 size_t UctPlayer::ask_for_move(const vector<Move> &legal_moves) {
+    if (options.solo_disabled() && legal_moves.size() == 1 && legal_moves[0].is_game_type_move()) {
+        return 0;
+    }
     ++counter;
     int player_to_move = current_belief_state->get_player_to_move();
     assert(player_to_move == id);

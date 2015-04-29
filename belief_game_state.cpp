@@ -432,11 +432,8 @@ void BeliefGameState::set_move(int player, const Move &move) {
         // undo regular game assumption
         game_type = 0;
         tricks.clear();
-        set_game_type_move(move);
-        // TODO: the following two lines also exist in set_has_reservation_move()
-        assert(tricks.empty());
-        tricks.push_back(Trick(game_type, player_to_move)); // initialize tricks already here such that get_legal_moves works also for an uct player who is starting the card play (thus setting it when playing the first card would be too late)
-        return;
+        player_to_move = player;
+        next_move_type = Move(&regular);
     }
     if (player != player_to_move)
         cout << player << " " << player_to_move << endl;
