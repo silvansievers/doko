@@ -73,6 +73,7 @@ void print_help() {
     cout << "Usage:";
     cout << "--help,-h: print this help message" << endl;
     cout << "--number,-n: number of games for the session, preferably a number divisible by 4 (if smaller than 4, compulsory solos are disabled)" << endl;
+    cout << "--no-solo: disable solo playing. Players with two queens of clubs automatically play a marriage. (default: false)" << endl;
     cout << "--compulsory-solo: play with compulsory solo (default: false)" << endl;
     cout << "--random,--r: use random cards for the whole session (default: false). if option is not set, you will be asked to input a card distribution manually (or to deal random cards) after each game";
     cout << "--seed,--s: random seed for random cards dealing" << endl;
@@ -173,6 +174,7 @@ int main(int argc, char *argv[]) {
     register_event_handlers();
 
     int number = 1000;
+    bool no_solo = false;
     bool compulsory_solo = false;
     bool random = false;
     int seed = 2012;
@@ -204,6 +206,8 @@ int main(int argc, char *argv[]) {
                 cerr << "number of games must be a multiple of 4" << endl;
                 exit(2);
             }
+        } else if (arg == "--no-solo") {
+            no_solo = true;
         } else if (arg == "--compulsory-solo") {
             compulsory_solo = true;
         } else if (arg == "--random" || arg == "r") {
@@ -292,9 +296,9 @@ int main(int argc, char *argv[]) {
     }
 
     clock_t start = clock();
-    Options options(number, compulsory_solo, players_types, random, seed,
-                    verbose, uct_verbose, debug, uct_debug, players_options,
-                    create_graph, announcing_version);
+    Options options(number, no_solo, compulsory_solo, players_types, random,
+                    seed, verbose, uct_verbose, debug, uct_debug,
+                    players_options, create_graph, announcing_version);
     Session session(options);
     double duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
     cout << setprecision(5) << "time: " << duration << "s" << endl;

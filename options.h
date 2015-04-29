@@ -14,6 +14,7 @@ enum player_t {
 class Options {
 private:
     int number_of_games;
+    bool no_solo;
     bool compulsory_solo;
     std::vector<player_t> players_types;
     bool random_cards;
@@ -26,11 +27,14 @@ private:
     bool create_graph;
     int announcing_version;
 public:
-    Options(int number_of_games, bool compulsory_solo, const std::vector<player_t> &players_types,
+    Options(int number_of_games, bool no_solo, bool compulsory_solo, const std::vector<player_t> &players_types,
             bool random, int random_seed, bool verbose, bool uct_verbose, bool debug, bool uct_debug,
             const std::vector<std::vector<int> > &players_options, bool create_graph, int announcing_version);
     int get_number_of_games() const {
         return number_of_games;
+    }
+    bool solo_disabled() const {
+        return no_solo;
     }
     bool use_compulsory_solo() const {
         return compulsory_solo;

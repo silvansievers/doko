@@ -6,13 +6,14 @@
 
 using namespace std;
 
-Options::Options(int number_of_games_, bool compulsory_solo_, const vector<player_t> &players_types_,
+Options::Options(int number_of_games_, bool no_solo_, bool compulsory_solo_, const vector<player_t> &players_types_,
                  bool random_cards_, int random_seed_, bool verbose_, bool uct_verbose_, bool debug_,
                  bool uct_debug_, const vector<vector<int> > &players_options_, bool create_graph_,
                  int announcing_version_)
-                 : number_of_games(number_of_games_), compulsory_solo(compulsory_solo_), players_types(players_types_), random_cards(random_cards_), random_seed(random_seed_), verbose(verbose_), uct_verbose(uct_verbose_),
-                 debug(debug_), uct_debug(uct_debug_), players_options(players_options_), create_graph(create_graph_),
-                 announcing_version(announcing_version_) {
+                 : number_of_games(number_of_games_), no_solo(no_solo_), compulsory_solo(compulsory_solo_),
+                   players_types(players_types_), random_cards(random_cards_), random_seed(random_seed_),
+                   verbose(verbose_), uct_verbose(uct_verbose_), debug(debug_), uct_debug(uct_debug_),
+                   players_options(players_options_), create_graph(create_graph_), announcing_version(announcing_version_) {
 }
 
 bool Options::specify_cards_manually(Cards cards[4]) const {
@@ -107,6 +108,7 @@ void print(const string &output, bool value) {
 void Options::dump() const {
     cout << "Chosen options for the session:" << endl;
     cout << "Number of games: " << number_of_games << endl;
+    print("Solo playing disabled: ", no_solo);
     print("Play compulsory solos: ", compulsory_solo);
     print("Random cards: ", random_cards);
     cout << "Random seed: " << random_seed << endl;

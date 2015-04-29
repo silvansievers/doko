@@ -80,6 +80,41 @@ void ActualGameState::ask_player_for_solo(int player) {
 }
 
 void ActualGameState::determine_game_type(int first_player, bool vorfuehrung) {
+    if (options.solo_disabled()) {
+        for (int player = 0; player < 4; ++player) {
+            if (cards[player].contains_card(CQ) && cards[player].contains_card(CQ_)) {
+                // TODO: this code is copied from below, from regular marriage determination
+                vector<Move> legal_game_type_moves;
+                legal_game_type_moves.push_back(Move(&marriage));
+                size_t move_no = make_move(player, legal_game_type_moves);
+                assert(move_no == 0);
+                cout << "player " << player << " has a marriage" << endl;
+                game_type = &marriage;
+                solo_or_marriage_player = player;
+                players_team[player] = 1;
+                players_known_team[player] = 1;
+                int player_it = next_player(player);
+                for (int i = 0; i < 3; ++i) {
+                    players_team[player_it] = 0;
+                    players_known_team[player_it] = 0; // also initialize the known teams such that if the marriage fails, nothing needs to be updated, and if it succeeds, there is just one player to be updated (both players_team and players_known_team)
+                    player_it = next_player(player_it);
+                }
+                return;
+            }
+        }
+        // no marriage -> regular game
+        // TODO: also this part is copied from below, see "reservation == 0"
+        cout << "regular game will be played" << endl;
+        game_type = &regular;
+        for (int i = 0; i < 4; ++i) {
+            if (cards[i].contains_card(CQ) || cards[i].contains_card(CQ_))
+                players_team[i] = 1;
+            else
+                players_team[i] = 0;
+        }
+        return;
+    }
+
     // in the case of vorfuehrung, just ask the first player for his solo game
     if (vorfuehrung) {
         cout << "vorfuehrung: ";

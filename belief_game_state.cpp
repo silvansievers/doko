@@ -39,7 +39,19 @@ BeliefGameState::BeliefGameState(const Options &options, int player_number_, con
 }
 
 void BeliefGameState::determine_first_move(bool vorfuehrung) {
-    if (vorfuehrung) {
+    if (options.solo_disabled()) {
+        // if no solos are allowed, we assume that the game type is regular and
+        // the first move is an announcement move. We capture the case of a
+        // marriage in set_move().
+        game_type = &regular;
+        assert(tricks.empty());
+        tricks.push_back(Trick(game_type, player_to_move)); // initialize tricks already here that get_legal_moves works also for an uct player who is starting the card play (thus setting it when playing the first card would be too late)
+        next_move_type = Move(NONE, false);
+        if (options.use_debug() && uct_output)
+            cout << "regular game will be played" << endl;
+        if (options.use_debug() && uct_output)
+            cout << "next move will be: announcement move" << endl;
+    } else if (vorfuehrung) {
         next_move_type = Move(&regular);
     } else {
         int player_it = player_to_move;
@@ -416,6 +428,16 @@ void BeliefGameState::set_card_move(const Move &move) {
 }
 
 void BeliefGameState::set_move(int player, const Move &move) {
+    if (options.solo_disabled() && move.is_game_type_move()) {
+        // undo regular game assumption
+        game_type = 0;
+        tricks.clear();
+        set_game_type_move(move);
+        // TODO: the following two lines also exist in set_has_reservation_move()
+        assert(tricks.empty());
+        tricks.push_back(Trick(game_type, player_to_move)); // initialize tricks already here such that get_legal_moves works also for an uct player who is starting the card play (thus setting it when playing the first card would be too late)
+        return;
+    }
     if (player != player_to_move)
         cout << player << " " << player_to_move << endl;
     assert(player == player_to_move);
