@@ -9,10 +9,12 @@ class GameType;
 class GameState;
 class Options;
 class Player;
+class Timer;
 
 class Session {
 private:
-    Options &options;
+    const Options &options;
+    Timer *timer;
     Player *players[4];
     int players_points[4]; // accumulated points over all games
     bool played_compulsory_solo[4];

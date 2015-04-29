@@ -6,6 +6,7 @@
 #include "options.h"
 #include "random_player.h"
 #include "rng.h"
+#include "timer.h"
 #include "uct_player.h"
 
 #include <algorithm>
@@ -14,14 +15,21 @@
 
 using namespace std;
 
-Session::Session(Options &options_) : options(options_), rng(options.get_random_seed()), first_player(0), vorfuehrung(false) {
+Session::Session(Options &options_)
+    : options(options_),
+      rng(options.get_random_seed()),
+      first_player(0),
+      vorfuehrung(false) {
+    timer = new Timer();
     Cards::setup_bit_count();
     play();
+    cout << "time: " << *timer << endl;
 }
 
 Session::~Session() {
     for (int i = 0; i < 4; ++i)
         delete players[i];
+    delete timer;
 }
 
 void Session::play() {
@@ -47,7 +55,7 @@ void Session::play() {
             played_compulsory_solo[i] = true;
     }
     for (int i = 0; i < options.get_number_of_games(); ++i) {
-        cout << "starting game number " << i << endl;
+        cout << "starting game number " << i << " [" << *timer << "]" << endl;
         if (options.use_random_cards())
             shuffle_cards();
         else {

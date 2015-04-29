@@ -12,6 +12,7 @@ HEADERS = actual_game_state.h \
 	random_player.h \
 	rng.h \
 	session.h \
+	timer.h \
 	trick.h \
 	uct.h \
 	uct_player.h
