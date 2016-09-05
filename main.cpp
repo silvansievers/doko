@@ -208,13 +208,13 @@ int main(int argc, char *argv[]) {
             no_solo = true;
         } else if (arg == "--compulsory-solo") {
             compulsory_solo = true;
-        } else if (arg == "--random" || arg == "r") {
+        } else if (arg == "--random" || arg == "-r") {
             random = true;
-        } else if (arg == "--seed" || arg == "s") {
+        } else if (arg == "--seed" || arg == "-s") {
             seed = get_int_option(argc, argv, i);
         } else if (arg == "--announcing-version") {
             announcing_version = get_int_option(argc, argv, i);
-        } else if (arg == "--players" || arg == "p") {
+        } else if (arg == "--players" || arg == "-p") {
             if (i + 4 >= argc) {
                 cerr << "Missing four arguments after " << argv[i] << endl;
                 exit(2);
