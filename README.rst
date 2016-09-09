@@ -30,18 +30,18 @@ Notes on the code:
 
 * That being said, this doesn't imply that one should by default assume
   that the code contains tons of bugs; experiments and lots of human
-  playing against the UCT player revealed no more bugs in the ends (of
-  course there will always be, but hopefully not in a high amount).
+  playing against the UCT player revealed no more bugs in the end (of
+  course there will always be, but hopefully not in a high amount),
+  and it is very reasonable to assume that the game is correctly
+  implemented.
 
-* Why did I still publish the code now, after many years? Since 2012,
-  several people wished to have access to the code, and repeating the
-  same explanations and warnings seemed to a waste of time. In addition,
-  being realistic, I will not find the time to clean up or improve thte
-  code in any ways in the near future. Hence, in the hope that it may
-  still be helpful, this code is now publicly available.
+* I publish the code nevertheless, because since 2012, several people
+  wished to have access to the code, and I always thought I would first
+  go to clean it up. Being realistic, this will not happen in the near
+  future, and so I hope the code can still be useful as it is.
 
-* Finally, if you decide to build upon my code base and find anything
-  suspicous to be a bug, please let me know! You may just email me or
+* Finally, if you decide to build upon the code base and find anything
+  suspicious to be a bug, please let me know! You may just email me or
   create issues on bitbucket.
 
 Compilation
