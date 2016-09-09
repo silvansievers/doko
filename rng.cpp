@@ -1,4 +1,8 @@
 /*
+  This file stems from a Fast Downward version dating around December 2014.
+*/
+
+/*
   Mersenne Twister Random Number Generator.
   Based on the C Code by Takuji Nishimura and Makoto Matsumoto.
   http://www.math.keio.ac.jp/~matumoto/emt.html
@@ -7,6 +11,7 @@
 #include "rng.h"
 
 #include <ctime>
+
 using namespace std;
 
 static const int M = 397;

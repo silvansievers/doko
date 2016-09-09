@@ -52,7 +52,6 @@ $(OBJECTS): .obj/%.o: %.cpp
 
 clean:
 	rm -rf .obj
-	rm -f *~
 	rm -f Makefile.depend gmon.out PROFILE core
 
 distclean: clean

@@ -1,3 +1,7 @@
+/*
+  This file stems from a Fast Downward version dating around December 2014.
+*/
+
 #include "timer.h"
 //#include "utilities.h"
 
