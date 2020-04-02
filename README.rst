@@ -41,8 +41,8 @@ Notes on the code:
   future, and so I hope the code can still be useful as it is.
 
 * Finally, if you decide to build upon the code base and find anything
-  suspicious to be a bug, please let me know! You may just email me or
-  create issues on bitbucket.
+  which doesn't work, it is likely a bug and please let me know! Just
+  drop an email or create an issue here.
 
 Compilation
 ===========
