@@ -47,7 +47,12 @@ Notes on the code:
 Compilation
 ===========
 
-Simply typing ``make`` should work on modern Unix systems.
+doko comes with the cmake build system. On linux, use
+$mkdir build
+$cd build
+$cmake ../
+$make
+to compile doko. The binary doko will be placed in the build directory.
 
 Usage
 =====
