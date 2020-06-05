@@ -37,4 +37,4 @@ foreach(FILE ${CC_FILES})
     list(APPEND SOURCES main.cpp ${FILE}.cpp ${FILE}.h)
 endforeach()
 
-add_executable(hug ${SOURCES})
+add_executable(doko ${SOURCES})
